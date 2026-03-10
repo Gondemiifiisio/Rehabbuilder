@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>RehabBuilder Pro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:#eef2f6;margin:0}
+header{background:#1e3a5f;color:white;padding:20px}
+header h1{margin:0}
+.container{max-width:1200px;margin:auto;padding:20px}
+.card{background:white;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 3px 10px rgba(0,0,0,0.08)}
+.controls{display:flex;flex-wrap:wrap;gap:20px}
+label{font-weight:bold}
+select,input{padding:8px;margin-top:5px;min-width:200px}
+button{background:#2c7be5;color:white;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;margin-right:10px;margin-top:10px}
+button:hover{background:#1a68d1}
+.exercise{border-bottom:1px solid #eee;padding:15px 0}
+.exercise:last-child{border-bottom:none}
+.exercise-title{font-weight:bold}
+.exercise-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:10px}
+iframe{width:100%;height:250px;border-radius:6px;border:none}
+img{width:100%;border-radius:6px}
+.footer{text-align:center;color:#777;font-size:12px;padding:30px}
+@media(max-width:900px){.exercise-grid{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>RehabBuilder Pro</h1>
+<p>Software profesional para prescripción de ejercicio terapéutico</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<div class="controls">
+
+<div>
+<label>Paciente</label><br>
+<input id="paciente" placeholder="Nombre paciente">
+</div>
+
+<div>
+<label>Región corporal</label><br>
+<select id="region">
+<option>Columna lumbar</option>
+<option>Columna cervical</option>
+<option>Hombro</option>
+<option>Codo</option>
+<option>Rodilla</option>
+<option>Tobillo</option>
+<option>Pie</option>
+<option>Cadera</option>
+</select>
+</div>
+
+<div>
+<label>Patología</label><br>
+<select id="patologia"></select>
+</div>
+
+<div>
+<label>Nº ejercicios</label><br>
+<select id="cantidad">
+<option>6</option>
+<option>8</option>
+<option>10</option>
+<option>12</option>
+</select>
+</div>
+
+</div>
+
+<button onclick="generarRutina()">Generar rutina</button>
+<button onclick="window.print()">Exportar / Imprimir</button>
+
+</div>
+
+<div class="card">
+<h2 id="tituloRutina">Rutina</h2>
+<div id="rutina"></div>
+</div>
+
+</div>
+
+<div class="footer">
+RehabBuilder Pro – Plataforma de ejercicio terapéutico para fisioterapia
+</div>
+
+<script>
+
+const patologiasPorRegion={
+
+"Columna lumbar":["Dolor lumbar inespecífico","Hernia discal lumbar"],
+"Columna cervical":["Cervicalgia","Latigazo cervical"],
+"Hombro":["Síndrome subacromial","Rotura manguito rotador","Inestabilidad de hombro"],
+"Codo":["Epicondilalgia lateral","Epitrocleitis"],
+"Rodilla":["Tendinopatía rotuliana","Condropatía femoropatelar","Rotura LCA","Meniscopatía degenerativa","Artrosis de rodilla"],
+"Tobillo":["Esguince de tobillo","Tendinopatía aquílea"],
+"Pie":["Fascitis plantar"],
+"Cadera":["Bursitis trocantérea","Artrosis de cadera"]
+
+}
+
+const ejercicios={
+
+"Dolor lumbar inespecífico":[
+{n:"Bird Dog",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/4/4e/Bird_dog_exercise.png",vid:"https://www.youtube.com/embed/wd6xg0z0G6k"},
+{n:"Puente de glúteo",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/7/70/Glute_bridge.png",vid:"https://www.youtube.com/embed/m2Zx-57cSok"},
+{n:"Plancha",s:"3x20s",img:"https://upload.wikimedia.org/wikipedia/commons/0/0c/Front_plank.png",vid:"https://www.youtube.com/embed/pSHjTRCQxIw"},
+{n:"Gato-camello",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/2/2c/Cat_camel_exercise.png",vid:"https://www.youtube.com/embed/kqnua4rHVVA"},
+{n:"Sentadilla",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/6/6b/Squat_exercise.png",vid:"https://www.youtube.com/embed/aclHkVaku9U"},
+{n:"Marcha activación core",s:"3x30s",img:"https://upload.wikimedia.org/wikipedia/commons/2/2e/Walking_exercise.png",vid:"https://www.youtube.com/embed/L3eImBAXT7I"}
+],
+
+"Cervicalgia":[
+{n:"Retracción cervical",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/1/1e/Chin_tuck.png",vid:"https://www.youtube.com/embed/2NOsE-VPpkE"},
+{n:"Isométricos cervicales",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/5/5c/Neck_isometric.png",vid:"https://www.youtube.com/embed/gimeRpdqWQw"},
+{n:"Remo con banda",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/8/8c/Resistance_band_row.png",vid:"https://www.youtube.com/embed/vT2GjY_Umpw"},
+{n:"Wall slides",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/6/6a/Wall_slide_exercise.png",vid:"https://www.youtube.com/embed/-9u1C5o0z5c"},
+{n:"Movilidad cervical",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/9/9a/Neck_mobility.png",vid:"https://www.youtube.com/embed/3qFYxMXCC3A"}
+],
+
+"Síndrome subacromial":[
+{n:"Rotación externa con banda",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/8/84/Shoulder_external_rotation_band.png",vid:"https://www.youtube.com/embed/4pKly2JojMw"},
+{n:"Pendulares",s:"3x20s",img:"https://upload.wikimedia.org/wikipedia/commons/b/bc/Pendulum_exercise.png",vid:"https://www.youtube.com/embed/xq7C1G2p7K0"},
+{n:"Retracción escapular",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/4/48/Scapular_retraction.png",vid:"https://www.youtube.com/embed/vq5-vdgJc0I"},
+{n:"Wall slide",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/6/6a/Wall_slide_exercise.png",vid:"https://www.youtube.com/embed/-9u1C5o0z5c"}
+],
+
+"Epicondilalgia lateral":[
+{n:"Excéntrico extensores muñeca",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/1/18/Wrist_extension_exercise.png",vid:"https://www.youtube.com/embed/Ebq0F8M3q4U"},
+{n:"Agarre con pelota",s:"3x15",img:"https://upload.wikimedia.org/wikipedia/commons/f/f0/Grip_exercise_ball.png",vid:"https://www.youtube.com/embed/3cYp6cC8G9k"}
+],
+
+"Tendinopatía rotuliana":[
+{n:"Sentadilla isométrica",s:"4x30s",img:"https://upload.wikimedia.org/wikipedia/commons/6/6b/Squat_exercise.png",vid:"https://www.youtube.com/embed/aclHkVaku9U"},
+{n:"Step down",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/3/3c/Step_down_exercise.png",vid:"https://www.youtube.com/embed/0Y1v2mNnV7I"},
+{n:"Peso muerto rumano",s:"3x10",img:"https://upload.wikimedia.org/wikipedia/commons/5/5b/Romanian_deadlift.png",vid:"https://www.youtube.com/embed/2SHsk9AzdjA"}
+],
+
+"Esguince de tobillo":[
+{n:"Equilibrio monopodal",s:"3x30s",img:"https://upload.wikimedia.org/wikipedia/commons/1/1c/Single_leg_balance.png",vid:"https://www.youtube.com/embed/2Y6q1vZ2jM8"},
+{n:"Elevaciones talón",s:"3x15",img:"https://upload.wikimedia.org/wikipedia/commons/0/0a/Calf_raise.png",vid:"https://www.youtube.com/embed/YMmgqO8Jo-k"}
+],
+
+"Fascitis plantar":[
+{n:"Short foot",s:"3x12",img:"https://upload.wikimedia.org/wikipedia/commons/3/3a/Short_foot_exercise.png",vid:"https://www.youtube.com/embed/WTSOQg680mc"},
+{n:"Estiramiento gemelo",s:"3x30s",img:"https://upload.wikimedia.org/wikipedia/commons/7/73/Calf_stretch.png",vid:"https://www.youtube.com/embed/y0oB6Y7K9vA"}
+]
+
+}
+
+function actualizarPatologias(){
+
+let region=document.getElementById("region").value
+let select=document.getElementById("patologia")
+
+select.innerHTML=""
+
+patologiasPorRegion[region].forEach(p=>{
+
+let option=document.createElement("option")
+option.text=p
+select.add(option)
+
+})
+
+}
+
+function shuffle(a){
+for(let i=a.length-1;i>0;i--){
+let j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]]
+}
+return a
+}
+
+function generarRutina(){
+
+let patologia=document.getElementById("patologia").value
+let cantidad=parseInt(document.getElementById("cantidad").value)
+let paciente=document.getElementById("paciente").value
+
+let lista=[...(ejercicios[patologia]||[])]
+shuffle(lista)
+
+let seleccion=lista.slice(0,cantidad)
+
+let html=""
+
+seleccion.forEach((e,i)=>{
+
+html+=`
+<div class="exercise">
+<div class="exercise-title">${i+1}. ${e.n} – ${e.s}</div>
+<div class="exercise-grid">
+<img src="${e.img}">
+<iframe src="${e.vid}" allowfullscreen></iframe>
+</div>
+</div>`
+
+})
+
+let fecha=new Date().toLocaleDateString()
+let titulo=`Rutina – ${patologia}`
+
+if(paciente!==""){
+
+titulo=`${paciente} – ${patologia} (${fecha})`
+
+}
+
+document.getElementById("tituloRutina").innerText=titulo
+
+document.getElementById("rutina").innerHTML=html
+
+}
+
+// inicialización
+actualizarPatologias()
+document.getElementById("region").addEventListener("change",actualizarPatologias)
+
+</script>
+
+</body>
+</html>
